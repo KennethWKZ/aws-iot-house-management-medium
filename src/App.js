@@ -1,17 +1,27 @@
 import React from 'react';
 import './App.css';
-import House from "./components/House";
 import Layout from "./components/Layout";
-import TextField from "@material-ui/core/TextField";
 import HomeManagement from "./components/HomeManagement";
+import {AmplifyAuthenticator, AmplifySignOut, withAuthenticator} from "@aws-amplify/ui-react";
+import awsExports from './aws-exports';
+import Amplify from "aws-amplify";
+Amplify.configure(awsExports);
+
 function App() {
   return (
     <div className="App">
         <Layout>
-            <HomeManagement/>
+            <AmplifyAuthenticator>
+                <div>
+                    <div  style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems: 'center'}}>
+                    <HomeManagement/>
+                    <AmplifySignOut style={{marginTop:40}} />
+                    </div>
+                </div>
+            </AmplifyAuthenticator>
         </Layout>
     </div>
   );
 }
 
-export default App;
+export default withAuthenticator(App);

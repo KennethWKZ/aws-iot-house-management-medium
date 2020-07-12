@@ -16,19 +16,21 @@ class House extends Component {
             sec_bedroom: '#FFFFFF',
             living_room: '#FFFFFF',
         }
+
     }
 
-    changerColor(command) {
+    changeColor(command) {
         command = command.split(' ');
+        let state = this.state;
         if (command.length && command.length === 2) {
             if (command[0] === 'on') {
-                this.state[command[1]] = this.onColor;
+                state[command[1]] = this.onColor;
             } else if (command[0] === 'off') {
-                this.state[command[1]] = this.offColor;
+                state[command[1]] = this.offColor;
             }
         }
 
-        this.setState(this.state);
+        this.setState(state);
     }
 
     render() {
