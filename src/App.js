@@ -1,27 +1,42 @@
-import React from 'react';
-import './App.css';
-import Layout from "./components/Layout";
+import { Authenticator, ThemeProvider } from "@aws-amplify/ui-react";
+import "@aws-amplify/ui-react/styles.css";
+import { Amplify } from "aws-amplify";
+import React from "react";
+import "./App.css";
+
+import awsExports from "./aws-exports";
 import HomeManagement from "./components/HomeManagement";
-import {AmplifyAuthenticator, AmplifySignOut, withAuthenticator} from "@aws-amplify/ui-react";
-import awsExports from './aws-exports';
-import Amplify from "aws-amplify";
+import Layout from "./components/Layout";
 Amplify.configure(awsExports);
 
 function App() {
   return (
-    <div className="App">
+    <ThemeProvider>
+      <div className="App">
         <Layout>
-            <AmplifyAuthenticator>
+          <Authenticator loginMechanisms={["email"]}>
+            {({ signOut, user }) => (
+              <main>
                 <div>
-                    <div  style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems: 'center'}}>
-                    <HomeManagement/>
-                    <AmplifySignOut style={{marginTop:40}} />
-                    </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <HomeManagement />
+                    <button style={{marginTop:40}} onClick={signOut}>Sign out</button>
+                  </div>
                 </div>
-            </AmplifyAuthenticator>
+              </main>
+            )}
+          </Authenticator>
         </Layout>
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }
 
-export default withAuthenticator(App);
+export default App;

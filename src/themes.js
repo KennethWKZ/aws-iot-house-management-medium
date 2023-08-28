@@ -1,8 +1,8 @@
-import { createMuiTheme } from '@material-ui/core/styles';
-import blue from '@material-ui/core/colors/blue';
+import blue from "@material-ui/core/colors/blue";
+import { createTheme } from "@material-ui/core/styles";
 
-const theme = createMuiTheme({
-    palette: {
-        primary: blue,
-    },
+const theme = createTheme({
+  palette: {
+    primary: blue,
+  },
 });

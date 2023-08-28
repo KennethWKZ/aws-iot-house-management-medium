@@ -1,97 +1,139 @@
-import React, {Component} from "react";
-import TextField from "@material-ui/core/TextField";
-import House from "./House";
-import IconButton from "@material-ui/core/IconButton";
-import SendIcon from '@material-ui/icons/Send';
+import { Auth } from "@aws-amplify/auth";
+import { AWSIoTProvider } from "@aws-amplify/pubsub";
 import Button from "@material-ui/core/Button";
+import IconButton from "@material-ui/core/IconButton";
+import TextField from "@material-ui/core/TextField";
+import SendIcon from "@material-ui/icons/Send";
+import { Amplify, Hub, PubSub } from "aws-amplify";
+import React, { Component } from "react";
+import House from "./House";
 import UserDisplay from "./UserDisplay";
-import {Amplify} from "aws-amplify";
-import {AWSIoTProvider, PubSub} from "@aws-amplify/pubsub";
-import {Auth} from "@aws-amplify/auth";
 
 class HomeManagement extends Component {
-    constructor(props) {
-        super(props);
-        this.child = React.createRef();
+  constructor(props) {
+    super(props);
+    this.child = React.createRef();
 
-        this.state = {command: "", hideHouse: false, creds: ""};
+    this.state = { command: "", hideHouse: false, creds: "" };
 
-        this.handleOnChange = this.handleOnChange.bind(this);
-        this.hideHouse = this.hideHouse.bind(this);
-    }
+    this.handleOnChange = this.handleOnChange.bind(this);
+    this.hideHouse = this.hideHouse.bind(this);
+  }
 
-    componentDidMount() {
-        Auth.currentCredentials().then(user => {
-            this.user = user;
-            Amplify.addPluggable(
-                new AWSIoTProvider({
-                    aws_pubsub_region: "eu-west-2",
-                    aws_pubsub_endpoint:
-                        "wss://<YOUR_PUBSUB_ENDPOINT>.iot.eu-west-2.amazonaws.com/mqtt",
-                    clientId: user.identityId
-                })
-            );
-            PubSub.subscribe(user.identityId+'/house').subscribe(v => {
-
-                this.child.current.changeColor(v.value.message);
-            });
+  componentDidMount() {
+    Auth.currentCredentials().then((user) => {
+      this.user = user;
+      Amplify.addPluggable(
+        new AWSIoTProvider({
+          aws_pubsub_region: "ap-southeast-1",
+          aws_pubsub_endpoint:
+            "wss://<YOUR_PUBSUB_ENDPOINT>.iot.ap-southeast-1.amazonaws.com/mqtt",
+          clientId: user.identityId,
         })
-    }
+      );
 
-    handleOnChange(event) {
-        this.setState({
-            command: event.target.value,
-            hideHouse: this.state.hideHouse,
-            creds: this.state.creds
-        })
-    }
+      Hub.listen("pubsub", (data) => {
+        const { payload } = data;
+        const connectionState = payload.data.connectionState;
+        console.log(connectionState);
+      });
 
-    hideHouse() {
-        this.setState({
-            command: this.state.command,
-            hideHouse: !this.state.hideHouse,
-            creds: this.state.creds
-        })
-    }
+      PubSub.subscribe(user.identityId + "/house").subscribe(
+        (data) => {
+          console.log("Message received", data.value);
+          this.child.current.changeColor(data.value.message);
+        },
+        (error) => console.error(error),
+        () => console.log("Done")
+      );
+    });
+  }
 
-    onClick = () => {
-        PubSub.publish(this.user.identityId+'/house', {'message': this.state.command});
-    };
+  handleOnChange(event) {
+    this.setState({
+      command: event.target.value,
+      hideHouse: this.state.hideHouse,
+      creds: this.state.creds,
+    });
+  }
 
-    render() {
-        return (
-            <div style={{marginTop: 50}}>
-                <UserDisplay></UserDisplay>
-                <form noValidate autoComplete="off">
+  hideHouse() {
+    this.setState({
+      command: this.state.command,
+      hideHouse: !this.state.hideHouse,
+      creds: this.state.creds,
+    });
+  }
 
-                    <p>{this.state.creds}</p>
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}>
-                        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
-                            <TextField id="outlined-basic" label="Command message" variant="outlined"
-                                       onChange={(event) => this.handleOnChange(event)} value={this.state.command}/>
-                            <IconButton color={"primary"} aria-label="delete" onClick={this.onClick}>
-                                <SendIcon/>
-                            </IconButton>
-                        </div>
-                    </div>
-                </form>
+  onClick = () => {
+    PubSub.publish(this.user.identityId + "/house", {
+      message: this.state.command,
+    });
+  };
 
-                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                    {this.state.hideHouse ? null : <House style={{marginTop: 50}} ref={this.child}/>}
-                    <Button variant="contained" style={{width: 150, marginTop: 50}} color="primary"
-                            onClick={this.hideHouse} disableElevation>
-                        {this.state.hideHouse ? 'Show House' : 'Hide house'}
-                    </Button>
-                </div>
+  render() {
+    return (
+      <div style={{ marginTop: 50 }}>
+        <UserDisplay></UserDisplay>
+        <form noValidate autoComplete="off">
+          <p>{this.state.creds}</p>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+              }}
+            >
+              <TextField
+                id="outlined-basic"
+                label="Command message"
+                variant="outlined"
+                onChange={(event) => this.handleOnChange(event)}
+                value={this.state.command}
+              />
+              <IconButton
+                color={"primary"}
+                aria-label="delete"
+                onClick={this.onClick}
+              >
+                <SendIcon />
+              </IconButton>
             </div>
-        );
-    }
+          </div>
+        </form>
 
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {this.state.hideHouse ? null : (
+            <House style={{ marginTop: 50 }} ref={this.child} />
+          )}
+          <Button
+            variant="contained"
+            style={{ width: 150, marginTop: 50 }}
+            color="primary"
+            onClick={this.hideHouse}
+            disableElevation
+          >
+            {this.state.hideHouse ? "Show House" : "Hide house"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default HomeManagement;
